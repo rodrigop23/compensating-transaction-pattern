@@ -1,0 +1,39 @@
+services:
+  db:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - postgresql:/var/lib/postgresql
+      - postgresql_data:/var/lib/postgresql/data
+
+  nats-server:
+    image: nats:latest
+    ports:
+      - "8222:8222"
+
+  pedido-ms:
+    build: ./pedido-ms
+    volumes:
+      - ./pedido-ms/src:/usr/src/app/src
+    command: npm run start:dev
+
+  inventario-ms:
+    build: ./inventario-ms
+    volumes:
+      - ./inventario-ms/src:/usr/src/app/src
+    command: npm run start:dev
+
+  pago-ms:
+    build: ./pago-ms
+    volumes:
+      - ./pago-ms/src:/usr/src/app/src
+    command: npm run start:dev
+
+volumes:
+  postgresql:
+  postgresql_data:
