@@ -21,18 +21,36 @@ services:
     volumes:
       - ./pedido-ms/src:/usr/src/app/src
     command: npm run start:dev
+    expose:
+      - "3000:3000"
+    environment:
+      NATS_SERVERS: nats://nats-server:4222
+      PORT: 3000
+      DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
 
   inventario-ms:
     build: ./inventario-ms
     volumes:
       - ./inventario-ms/src:/usr/src/app/src
     command: npm run start:dev
+    expose:
+      - "3001:3001"
+    environment:
+      NATS_SERVERS: nats://nats-server:4222
+      PORT: 3001
+      DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
 
   pago-ms:
     build: ./pago-ms
     volumes:
       - ./pago-ms/src:/usr/src/app/src
     command: npm run start:dev
+    expose:
+      - "3002:3002"
+    environment:
+      NATS_SERVERS: nats://nats-server:4222
+      PORT: 3002
+      DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
 
 volumes:
   postgresql:
