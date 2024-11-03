@@ -1,16 +1,4 @@
 services:
-  db:
-    image: postgres:latest
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: postgres
-    volumes:
-      - postgresql:/var/lib/postgresql
-      - postgresql_data:/var/lib/postgresql/data
-
   nats-server:
     image: nats:latest
     ports:
@@ -26,7 +14,7 @@ services:
     environment:
       NATS_SERVERS: nats://nats-server:4222
       PORT: 3000
-      DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
+      DATABASE_URL: file:./dev.db
 
   inventario-ms:
     build: ./inventario-ms
@@ -38,7 +26,7 @@ services:
     environment:
       NATS_SERVERS: nats://nats-server:4222
       PORT: 3001
-      DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
+      DATABASE_URL: file:./dev.db
 
   pago-ms:
     build: ./pago-ms
@@ -50,7 +38,7 @@ services:
     environment:
       NATS_SERVERS: nats://nats-server:4222
       PORT: 3002
-      DATABASE_URL: postgres://postgres:postgres@db:5432/postgres
+      DATABASE_URL: file:./dev.db
 
 volumes:
   postgresql:

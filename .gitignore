@@ -45,3 +45,5 @@ Thumbs.db
 
 postgresql
 postgresql_data
+dev.db
+dev.db-journal
