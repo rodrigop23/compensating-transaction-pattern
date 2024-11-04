@@ -12,26 +12,39 @@ export class PedidoService {
   ) {}
 
   async crearPedido(crearPedidoDto: CrearPedidoDto) {
-    try {
-      const pedido = await this.prisma.pedido.create({
-        data: {
-          clienteId: crearPedidoDto.clienteId,
-          productos: {
-            createMany: {
-              data: crearPedidoDto.productos.map((producto) => ({
-                name: producto.name,
-                quantity: producto.quantity,
-              })),
-            },
+    const pedido = await this.prisma.pedido.create({
+      data: {
+        clienteId: crearPedidoDto.clienteId,
+        productos: {
+          createMany: {
+            data: crearPedidoDto.productos.map((producto) => ({
+              name: producto.name,
+              quantity: producto.quantity,
+            })),
           },
         },
-      });
+      },
+      select: {
+        id: true,
+        clienteId: true,
+        productos: {
+          select: {
+            id: true,
+            quantity: true,
+          },
+        },
+      },
+    });
 
+    try {
       this.client.emit('pedido.creado', pedido);
 
       return pedido;
     } catch (error) {
+      await this.revertirCreacionPedido(pedido.id);
+
       console.log(error);
+
       throw new HttpException(
         'Error creating order',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -39,7 +52,7 @@ export class PedidoService {
     }
   }
 
-  async revertirPedido(id: number) {
+  async revertirCreacionPedido(id: number) {
     const pedido = this.prisma.pedido.update({
       where: { id },
       data: { isDeleted: true },
