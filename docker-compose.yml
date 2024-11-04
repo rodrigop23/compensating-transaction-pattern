@@ -9,7 +9,7 @@ services:
     volumes:
       - ./pedido-ms/src:/usr/src/app/src
     command: npm run start:dev
-    expose:
+    ports:
       - "3000:3000"
     environment:
       NATS_SERVERS: nats://nats-server:4222
@@ -21,7 +21,7 @@ services:
     volumes:
       - ./inventario-ms/src:/usr/src/app/src
     command: npm run start:dev
-    expose:
+    ports:
       - "3001:3001"
     environment:
       NATS_SERVERS: nats://nats-server:4222
@@ -33,13 +33,9 @@ services:
     volumes:
       - ./pago-ms/src:/usr/src/app/src
     command: npm run start:dev
-    expose:
+    ports:
       - "3002:3002"
     environment:
       NATS_SERVERS: nats://nats-server:4222
       PORT: 3002
       DATABASE_URL: file:./dev.db
-
-volumes:
-  postgresql:
-  postgresql_data:
