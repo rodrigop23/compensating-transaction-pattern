@@ -20,17 +20,25 @@ export class PagoService {
       data: {
         pedidoId: crearPagoDto.pedido.id,
         monto: crearPagoDto.monto,
+        status: 'PAID',
       },
       select: {
+        id: true,
         pedidoId: true,
       },
     });
-    try {
-      throw new Error('Error');
+    this.logger.log('Pago creado');
 
-      this.client.emit('pedido.completado', nuevoPago.pedidoId);
+    this.logger.log(nuevoPago);
+
+    try {
+      // throw new Error('Error');
+
+      this.client.emit('pedido.completado', { id: nuevoPago.pedidoId });
     } catch (error) {
       this.logger.error(error);
+
+      await this.revertirPago(nuevoPago.id);
 
       crearPagoDto.pedido.productos.map((item) =>
         this.client.emit('inventario.revertir.reduccion', {
@@ -45,5 +53,16 @@ export class PagoService {
 
       throw new RpcException('Error al crear el pago');
     }
+  }
+
+  async revertirPago(id: number) {
+    await this.prisma.pago.update({
+      where: {
+        id,
+      },
+      data: {
+        status: 'REVERTED',
+      },
+    });
   }
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, ParseIntPipe, Post } from '@nestjs/common';
+import { Body, Controller, Logger, ParseIntPipe, Post } from '@nestjs/common';
 import { PedidoService } from './pedido.service';
 import { CrearPedidoDto } from './dto/crear-pedido.dto';
 import { MessagePattern, Payload } from '@nestjs/microservices';
@@ -19,6 +19,8 @@ export class PedidoController {
 
   @MessagePattern('pedido.completado')
   async completarPedido(@Payload('id', ParseIntPipe) id: number) {
+    Logger.log('Entro a finalizar');
+
     return this.pedidoService.completarPedido(id);
   }
 }
