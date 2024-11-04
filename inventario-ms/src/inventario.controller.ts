@@ -1,12 +1,14 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
 import { InventarioService } from './inventario.service';
+import { MessagePattern, Payload } from '@nestjs/microservices';
+import { ReducirInventarioDto } from './dto/reducir-inventario.dto';
 
 @Controller()
 export class InventarioController {
   constructor(private readonly inventarioService: InventarioService) {}
 
-  @Get()
-  getHello(): string {
-    return this.inventarioService.getHello();
+  @MessagePattern('inventario.reducir')
+  async reducirInventario(@Payload() crearInventarioDto: ReducirInventarioDto) {
+    return this.inventarioService.reducirInventario(crearInventarioDto);
   }
 }
