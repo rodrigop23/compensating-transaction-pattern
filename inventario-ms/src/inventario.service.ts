@@ -14,8 +14,12 @@ export class InventarioService {
   async reducirInventario(reducirInventarioDto: ReducirInventarioDto) {
     const updatePromises = reducirInventarioDto.productos.map((item) =>
       this.prisma.inventario.updateMany({
-        where: { id: item.id },
-        data: { quantity: item.quantity },
+        where: { name: item.name },
+        data: {
+          quantity: {
+            decrement: item.quantity,
+          },
+        },
       }),
     );
 
@@ -31,29 +35,32 @@ export class InventarioService {
 
       const prices = await this.prisma.inventario.findMany({
         where: {
-          id: {
-            in: reducirInventarioDto.productos.map((item) => item.id),
+          name: {
+            in: reducirInventarioDto.productos.map((item) => item.name),
           },
         },
         select: {
           price: true,
-          id: true,
+          name: true,
         },
       });
 
       const totalPrice = prices.reduce(
         (acc, item) =>
           acc +
-          reducirInventarioDto.productos.find((i) => i.id === item.id)
+          reducirInventarioDto.productos.find((i) => i.name === item.name)
             .quantity *
             item.price,
         0,
       );
 
-      this.client.emit('pago.crear', { totalPrice });
+      this.client.emit('pago.crear', {
+        totalPrice,
+        id: reducirInventarioDto.id,
+      });
     } catch (error) {
       const revertChanges = reducirInventarioDto.productos.map((item) =>
-        this.revertirActualizacionInventario(item.id, item.quantity),
+        this.revertirActualizacionInventario(item.name, item.quantity),
       );
 
       await Promise.all(revertChanges);
@@ -71,12 +78,18 @@ export class InventarioService {
     }
   }
 
-  async revertirActualizacionInventario(id: string, quantity: number) {
-    await this.prisma.inventario.update({
-      where: { id },
-      data: { quantity },
+  async revertirActualizacionInventario(name: string, quantity: number) {
+    const findItem = await this.prisma.inventario.findFirst({
+      where: { name },
     });
 
-    this.client.emit('pedido.revertir.creacion', { totalPrice: 0 });
+    await this.prisma.inventario.update({
+      where: { id: findItem.id },
+      data: {
+        quantity: {
+          increment: quantity,
+        },
+      },
+    });
   }
 }

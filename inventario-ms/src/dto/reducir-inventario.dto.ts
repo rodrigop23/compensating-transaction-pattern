@@ -23,7 +23,7 @@ export class ReducirInventarioDto {
 
 export class ProductoDto {
   @IsString()
-  id: string;
+  name: string;
 
   @IsNumber()
   quantity: number;

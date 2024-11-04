@@ -1,9 +1,0 @@
--- CreateTable
-CREATE TABLE "Pago" (
-    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "pedidoId" INTEGER NOT NULL,
-    "monto" REAL NOT NULL,
-    "status" TEXT NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
-);
