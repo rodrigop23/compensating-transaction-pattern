@@ -1,11 +1,9 @@
-import { IsDecimal, IsNumber, IsPositive } from 'class-validator';
+import { IsNumber, IsPositive } from 'class-validator';
 
 export class CrearPagoDto {
-  @IsNumber()
-  @IsPositive()
-  pedidoId: number;
+  pedido: any;
 
-  @IsDecimal()
+  @IsNumber()
   @IsPositive()
   monto: number;
 }

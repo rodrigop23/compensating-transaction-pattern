@@ -16,4 +16,9 @@ export class PedidoController {
   async revertirCreacionPedido(@Payload('id', ParseIntPipe) id: number) {
     return this.pedidoService.revertirCreacionPedido(id);
   }
+
+  @MessagePattern('pedido.completado')
+  async completarPedido(@Payload('id', ParseIntPipe) id: number) {
+    return this.pedidoService.completarPedido(id);
+  }
 }

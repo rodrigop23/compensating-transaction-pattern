@@ -1,17 +1,21 @@
-import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from './prisma-client/prisma-client.service';
 import { NATS_SERVICE } from './config/services';
-import { ClientProxy } from '@nestjs/microservices';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { ReducirInventarioDto } from './dto/reducir-inventario.dto';
 
 @Injectable()
 export class InventarioService {
+  logger = new Logger('InventarioService');
+
   constructor(
     private prisma: PrismaService,
     @Inject(NATS_SERVICE) private readonly client: ClientProxy,
   ) {}
 
   async reducirInventario(reducirInventarioDto: ReducirInventarioDto) {
+    this.logger.log('Reducing inventory');
+
     const updatePromises = reducirInventarioDto.productos.map((item) =>
       this.prisma.inventario.updateMany({
         where: { name: item.name },
@@ -25,12 +29,13 @@ export class InventarioService {
 
     const results = await Promise.all(updatePromises);
 
+    this.logger.log(results);
+
     try {
-      if (results.length != reducirInventarioDto.productos.length) {
-        throw new HttpException(
-          'Error updating inventory',
-          HttpStatus.BAD_REQUEST,
-        );
+      // throw new Error('Error updating inventory');
+
+      if (results[0].count != reducirInventarioDto.productos.length) {
+        throw new RpcException('Error updating inventory');
       }
 
       const prices = await this.prisma.inventario.findMany({
@@ -54,10 +59,14 @@ export class InventarioService {
         0,
       );
 
-      this.client.emit('pago.crear', {
-        totalPrice,
-        id: reducirInventarioDto.id,
-      });
+      const dataToSend = {
+        pedido: reducirInventarioDto,
+        monto: totalPrice,
+      };
+
+      this.logger.log(dataToSend);
+
+      this.client.emit('pago.crear', dataToSend);
     } catch (error) {
       const revertChanges = reducirInventarioDto.productos.map((item) =>
         this.revertirActualizacionInventario(item.name, item.quantity),
@@ -71,17 +80,18 @@ export class InventarioService {
 
       console.log(error);
 
-      throw new HttpException(
-        'Error updating inventory',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw new RpcException('Error updating inventory');
     }
   }
 
   async revertirActualizacionInventario(name: string, quantity: number) {
+    this.logger.log('Reverting inventory update');
+
     const findItem = await this.prisma.inventario.findFirst({
       where: { name },
     });
+
+    this.logger.log(findItem);
 
     await this.prisma.inventario.update({
       where: { id: findItem.id },

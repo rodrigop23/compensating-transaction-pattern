@@ -4,38 +4,85 @@ services:
     ports:
       - "8222:8222"
 
+  postgres-pedido:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: pedido_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pedido-db-data:/var/lib/postgresql/data
+
+  postgres-inventario:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: inventario_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - inventario-db-data:/var/lib/postgresql/data
+
+  postgres-pago:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: pago_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - pago-db-data:/var/lib/postgresql/data
+
   pedido-ms:
     build: ./pedido-ms
     volumes:
       - ./pedido-ms/src:/usr/src/app/src
     command: npm run start:dev
+    depends_on:
+      - nats-server
+      - postgres-pedido
     ports:
       - "3000:3000"
     environment:
       NATS_SERVERS: nats://nats-server:4222
       PORT: 3000
-      DATABASE_URL: file:./dev.db
+      DATABASE_URL: postgres://user:password@postgres-pedido:5432/pedido_db?schema=public
 
   inventario-ms:
     build: ./inventario-ms
     volumes:
       - ./inventario-ms/src:/usr/src/app/src
     command: npm run start:dev
+    depends_on:
+      - nats-server
+      - postgres-inventario
     ports:
       - "3001:3001"
     environment:
       NATS_SERVERS: nats://nats-server:4222
       PORT: 3001
-      DATABASE_URL: file:./dev.db
+      DATABASE_URL: postgres://user:password@postgres-inventario:5432/inventario_db?schema=public
 
   pago-ms:
     build: ./pago-ms
     volumes:
       - ./pago-ms/src:/usr/src/app/src
     command: npm run start:dev
+    depends_on:
+      - nats-server
+      - postgres-pago
     ports:
       - "3002:3002"
     environment:
       NATS_SERVERS: nats://nats-server:4222
       PORT: 3002
-      DATABASE_URL: file:./dev.db
+      DATABASE_URL: postgres://user:password@postgres-pago:5432/pago_db?schema=public
+
+volumes:
+  pedido-db-data:
+  inventario-db-data:
+  pago-db-data:

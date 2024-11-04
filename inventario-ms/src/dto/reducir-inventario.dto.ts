@@ -8,11 +8,11 @@ import {
 } from 'class-validator';
 
 export class ReducirInventarioDto {
-  @IsString()
-  id: string;
+  @IsNumber()
+  id: number;
 
-  @IsString()
-  clientId: string;
+  @IsNumber()
+  clienteId: number;
 
   @IsArray()
   @ArrayMinSize(1)

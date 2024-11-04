@@ -1,4 +1,10 @@
-import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from './prisma-client/prisma-client.service';
 import { CrearPedidoDto } from './dto/crear-pedido.dto';
 import { NATS_SERVICE } from './config/services';
@@ -6,12 +12,17 @@ import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
 export class PedidoService {
+  logger = new Logger('PedidoService');
+
   constructor(
     private prisma: PrismaService,
     @Inject(NATS_SERVICE) private readonly client: ClientProxy,
   ) {}
 
   async crearPedido(crearPedidoDto: CrearPedidoDto) {
+    this.logger.log('Creating order');
+    this.logger.log(crearPedidoDto);
+
     const pedido = await this.prisma.pedido.create({
       data: {
         clienteId: crearPedidoDto.clienteId,
@@ -29,7 +40,7 @@ export class PedidoService {
         clienteId: true,
         productos: {
           select: {
-            id: true,
+            name: true,
             quantity: true,
           },
         },
@@ -37,13 +48,17 @@ export class PedidoService {
     });
 
     try {
-      this.client.emit('pedido.creado', pedido);
+      // throw new Error('Error creating order');
+
+      this.logger.log('pedido: ', pedido);
+
+      this.client.emit('inventario.reducir', pedido);
 
       return pedido;
     } catch (error) {
       await this.revertirCreacionPedido(pedido.id);
 
-      console.log(error);
+      this.logger.error(error);
 
       throw new HttpException(
         'Error creating order',
@@ -53,9 +68,22 @@ export class PedidoService {
   }
 
   async revertirCreacionPedido(id: number) {
+    this.logger.log('Reverting order creation');
+
     const pedido = this.prisma.pedido.update({
       where: { id },
       data: { isDeleted: true },
+    });
+
+    return pedido;
+  }
+
+  async completarPedido(id: number) {
+    this.logger.log('Completing order');
+
+    const pedido = this.prisma.pedido.update({
+      where: { id },
+      data: { status: 'COMPLETED' },
     });
 
     return pedido;
